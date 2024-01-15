@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	unixclient "github.com/NubeIO/unixserver/unixcleint"
-	"time"
 )
 
 type User struct {
@@ -21,47 +20,51 @@ func main() {
 		return
 	}
 
-	// No defer client.Close() here
-
-	// Example of sending a user
-	userToSend := User{Name: "Alice C"}
-	p := &Person{}
-	resp, err := client.Send("user/add", &userToSend, 5, p)
+	resp, err := client.SendString("user/send/string", "hello", 5)
 	if err != nil {
 		fmt.Println("Error sending user:", err)
 		return
 	}
-
 	Print(resp)
 
-	fmt.Println("Got back from send:", p.Name2)
-
-	// Example of getting a user
-
-	resp, err = client.Get("user/get", 1, p)
+	resp, err = client.SendNumber("user/send/number", 1234.66, 5)
 	if err != nil {
-		fmt.Println("Error getting user:", err)
+		fmt.Println("Error sending user:", err)
 		return
 	}
 	Print(resp)
 
-	var pong string
-	resp, err = client.Send("server/ping", nil, 5, &pong)
-	if err != nil {
-		fmt.Println("ping err", err)
-		// handle error
-	}
+	resultMap := make(map[string]interface{})
+	resultMap["a"] = "abc"
+	resultMap["num"] = 123.66
 
-	fmt.Println("PING", pong)
-
-	var timeBack time.Time
-	resp, err = client.Send("user/date", nil, 5, &timeBack)
+	resp, err = client.SendMap("user/send/map", resultMap, 5)
 	if err != nil {
-		fmt.Println("ping err", err)
-		// handle error
+		fmt.Println("Error sending user:", err)
+		return
 	}
 	Print(resp)
-	fmt.Println("timeBack", timeBack)
+
+	resp, err = client.GetString("user/get", 5)
+	if err != nil {
+		fmt.Println("Error sending user:", err)
+		return
+	}
+	Print(resp)
+
+	resp, err = client.GetMap("user/get/map", 5)
+	if err != nil {
+		fmt.Println("Error getting map:", err)
+		return
+	}
+	Print(resp)
+
+	resp, err = client.GetArray("user/get/array", 5)
+	if err != nil {
+		fmt.Println("Error getting map:", err)
+		return
+	}
+	Print(resp)
 
 	client.Close()
 }

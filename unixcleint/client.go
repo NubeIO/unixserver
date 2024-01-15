@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"time"
 )
 
 type UnixClient struct {
@@ -47,38 +46,7 @@ type Response struct {
 	Error  interface{}
 }
 
-func (uc *UnixClient) Send(path string, model interface{}, timeoutInSeconds int, expectedResponse interface{}) (*Response, error) {
-	deadline := time.Now().Add(time.Duration(timeoutInSeconds) * time.Second)
-	uc.conn.SetDeadline(deadline)
-
-	data, err := json.Marshal(model)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling data: %w", err)
-	}
-
-	message := fmt.Sprintf("%s\n%s\n", path, string(data))
-	_, err = uc.conn.Write([]byte(message))
-	if err != nil {
-		return nil, fmt.Errorf("error writing to connection: %w", err)
-	}
-
-	reader := bufio.NewReader(uc.conn)
-	return uc.processResponse(reader, expectedResponse)
-}
-
-func (uc *UnixClient) Get(path string, timeoutInSeconds int, expectedResponse interface{}) (*Response, error) {
-	deadline := time.Now().Add(time.Duration(timeoutInSeconds) * time.Second)
-	uc.conn.SetDeadline(deadline)
-
-	if _, err := uc.conn.Write([]byte(path + "\n")); err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
-	}
-
-	reader := bufio.NewReader(uc.conn)
-	return uc.processResponse(reader, expectedResponse)
-}
-
-func (uc *UnixClient) processResponse(reader *bufio.Reader, expectedResponse interface{}) (*Response, error) {
+func (uc *UnixClient) processResponse(reader *bufio.Reader, expectedResponse interface{}, expectedType string) (*Response, error) {
 	responseStr, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("error reading response: %w", err)
@@ -90,14 +58,38 @@ func (uc *UnixClient) processResponse(reader *bufio.Reader, expectedResponse int
 		return nil, fmt.Errorf("error unmarshalling response: %w", err)
 	}
 
+	// Handling different expected types
 	if resp.Status == "Success" && expectedResponse != nil && resp.Data != nil {
-		dataBytes, err := json.Marshal(resp.Data)
-		if err != nil {
-			return nil, fmt.Errorf("error marshalling response data: %w", err)
-		}
-		err = json.Unmarshal(dataBytes, expectedResponse)
-		if err != nil {
-			return nil, fmt.Errorf("error unmarshalling response data: %w", err)
+		switch expectedType {
+		case "string":
+			if strPtr, ok := expectedResponse.(*string); ok {
+				*strPtr = resp.Data.(string)
+			}
+		case "number":
+			if numPtr, ok := expectedResponse.(*float64); ok {
+				*numPtr = resp.Data.(float64)
+			}
+		case "bool":
+			if boolPtr, ok := expectedResponse.(*bool); ok {
+				*boolPtr = resp.Data.(bool)
+			}
+		case "map":
+			if mapPtr, ok := expectedResponse.(*map[string]interface{}); ok {
+				*mapPtr = resp.Data.(map[string]interface{})
+			}
+		case "array":
+			if arrayPtr, ok := expectedResponse.(*[]interface{}); ok {
+				*arrayPtr = resp.Data.([]interface{})
+			}
+		default:
+			dataBytes, err := json.Marshal(resp.Data)
+			if err != nil {
+				return nil, fmt.Errorf("error marshalling response data: %w", err)
+			}
+			err = json.Unmarshal(dataBytes, expectedResponse)
+			if err != nil {
+				return nil, fmt.Errorf("error unmarshalling response data: %w", err)
+			}
 		}
 	}
 

@@ -36,7 +36,28 @@ type Person struct {
 	Name string `json:"name"`
 }
 
-// UserGetHandler handles retrieving a user
+func (us *UserService) UserSendNumber(conn net.Conn, model interface{}) {
+	dataIn, ok := model.(*float64)
+	if !ok {
+		us.us.Response(conn, nil, fmt.Errorf("invalid data type, expected number"))
+		return
+	}
+
+	responseData := fmt.Sprintf("Echo: %f", *dataIn) // Format as float
+	us.us.Response(conn, responseData, nil)
+}
+
+func (us *UserService) UserSendString(conn net.Conn, model interface{}) {
+	dataIn, ok := model.(*string)
+	if !ok {
+		us.us.Response(conn, nil, fmt.Errorf("invalid data type, expected string"))
+		return
+	}
+
+	responseData := fmt.Sprintf("Echo: %f", *dataIn) // Format as float
+	us.us.Response(conn, responseData, nil)
+}
+
 func (us *UserService) UserGetHandler(conn net.Conn, model interface{}) {
 	user := User{Name: "Aidan P"}
 	us.us.Response(conn, user, nil)
@@ -45,4 +66,28 @@ func (us *UserService) UserGetHandler(conn net.Conn, model interface{}) {
 func (us *UserService) UserGetDateHandler(conn net.Conn, model interface{}) {
 
 	us.us.Response(conn, time.Now(), nil)
+}
+
+func (us *UserService) UserSendMap(conn net.Conn, model interface{}) {
+	dataIn, ok := model.(*map[string]interface{})
+	if !ok {
+		us.us.Response(conn, nil, fmt.Errorf("invalid data type, expected map"))
+		return
+	}
+	us.us.Response(conn, dataIn, nil)
+}
+
+func (us *UserService) UserGetMap(conn net.Conn, model interface{}) {
+	// Example data to be sent back
+	data := map[string]interface{}{
+		"key1": "value1",
+		"key2": 123,
+	}
+	us.us.Response(conn, data, nil)
+}
+
+func (us *UserService) UserGetArray(conn net.Conn, model interface{}) {
+	// Example data to be sent back
+	data := []interface{}{"value1", 123, true}
+	us.us.Response(conn, data, nil)
 }

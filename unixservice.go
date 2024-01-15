@@ -179,6 +179,11 @@ func (us *UnixService) readPayload(reader *bufio.Reader, routeInfo Route) (strin
 }
 
 func (us *UnixService) unmarshalPayload(payload string, routeInfo Route) interface{} {
+	// Check if model is nil or a pointer type
+	if routeInfo.model == nil || reflect.TypeOf(routeInfo.model).Kind() != reflect.Ptr {
+		return nil // No model to unmarshal into, or model is not a pointer
+	}
+
 	modelInstance := reflect.New(reflect.TypeOf(routeInfo.model).Elem()).Interface()
 	err := json.Unmarshal([]byte(payload), modelInstance)
 	if err != nil {
