@@ -26,19 +26,19 @@ func NewUnixClient(socketPath string) (*UnixClient, error) {
 	}, nil
 }
 
-func (uc *UnixClient) Close() {
-	if uc.conn != nil {
-		uc.conn.Close()
-	}
-}
-
-func (uc *UnixClient) reconnect() error {
+func (uc *UnixClient) Reconnect() error {
 	if uc.conn != nil {
 		uc.conn.Close()
 	}
 	var err error
 	uc.conn, err = net.Dial("unix", uc.socketPath)
 	return err
+}
+
+func (uc *UnixClient) Close() {
+	if uc.conn != nil {
+		uc.conn.Close()
+	}
 }
 
 type Response struct {
