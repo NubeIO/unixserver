@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 	validationResponse := &ValidationResponse{}
-	resp, err := client.Send("validation/ip", "192.168.", 5, &validationResponse, "")
+	resp, err := client.Send("validation/ip", "192.168.", 5, &validationResponse, "any")
 	Print(resp)
 	Print(validationResponse)
 
