@@ -18,37 +18,27 @@ func (uc *UnixClient) Get(path string, timeoutInSeconds int, expectedResponse in
 	return uc.processResponse(reader, expectedResponse, expectedType)
 }
 
-func (uc *UnixClient) GetString(path string, timeoutInSeconds int) (*Response, error) {
+func (uc *UnixClient) GetString(path string, timeoutInSeconds int) *Response {
 	resp, err := uc.Get(path, timeoutInSeconds, nil, "string")
-	return resp, err
+	return errorResp(resp, err)
 }
 
-func (uc *UnixClient) GetBool(path string, timeoutInSeconds int) (*Response, error) {
+func (uc *UnixClient) GetBool(path string, timeoutInSeconds int) *Response {
 	resp, err := uc.Get(path, timeoutInSeconds, nil, "bool")
-	return resp, err
+	return errorResp(resp, err)
 }
 
-func (uc *UnixClient) GetNumber(path string, timeoutInSeconds int) (*Response, error) {
+func (uc *UnixClient) GetNumber(path string, timeoutInSeconds int) *Response {
 	resp, err := uc.Get(path, timeoutInSeconds, nil, "number")
-	return resp, err
+	return errorResp(resp, err)
 }
 
-func (uc *UnixClient) GetMap(path string, timeoutInSeconds int) (*Response, error) {
+func (uc *UnixClient) GetMap(path string, timeoutInSeconds int) *Response {
 	resp, err := uc.Get(path, timeoutInSeconds, nil, "map")
-	if err != nil {
-		return nil, fmt.Errorf("error getting map: %w", err)
-	}
-
-	return resp, nil
+	return errorResp(resp, err)
 }
 
-func (uc *UnixClient) GetArray(path string, timeoutInSeconds int) (*Response, error) {
-	var resp Response
-	var data []interface{}
-	_, err := uc.Get(path, timeoutInSeconds, &data, "array")
-	if err != nil {
-		return nil, fmt.Errorf("error getting array: %w", err)
-	}
-	resp.Data = data
-	return &resp, nil
+func (uc *UnixClient) GetArray(path string, timeoutInSeconds int) *Response {
+	resp, err := uc.Get(path, timeoutInSeconds, nil, "array")
+	return errorResp(resp, err)
 }

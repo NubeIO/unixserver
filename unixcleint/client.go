@@ -40,12 +40,6 @@ func (uc *UnixClient) Close() {
 	}
 }
 
-type Response struct {
-	Status string // Success Error
-	Data   interface{}
-	Error  interface{}
-}
-
 func (uc *UnixClient) processResponse(reader *bufio.Reader, expectedResponse interface{}, expectedType string) (*Response, error) {
 	responseStr, err := reader.ReadString('\n')
 	if err != nil {
@@ -64,14 +58,18 @@ func (uc *UnixClient) processResponse(reader *bufio.Reader, expectedResponse int
 		case "string":
 			if strPtr, ok := expectedResponse.(*string); ok {
 				*strPtr = resp.Data.(string)
+				*strPtr = resp.AsString
+
 			}
 		case "number":
 			if numPtr, ok := expectedResponse.(*float64); ok {
 				*numPtr = resp.Data.(float64)
+				*numPtr = resp.AsNumber
 			}
 		case "bool":
 			if boolPtr, ok := expectedResponse.(*bool); ok {
 				*boolPtr = resp.Data.(bool)
+				*boolPtr = resp.AsBool
 			}
 		case "map":
 			if mapPtr, ok := expectedResponse.(*map[string]interface{}); ok {

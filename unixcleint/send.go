@@ -3,7 +3,6 @@ package unixclient
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 )
@@ -27,48 +26,8 @@ func (uc *UnixClient) Send(path string, dataToSend interface{}, timeoutInSeconds
 	return uc.processResponse(reader, expectedResponse, expectedType)
 }
 
-func (r *Response) IsError() bool {
-	if r.Error != "" {
-		return true
-	}
-	return false
-}
-
-func (r *Response) IsOk() bool {
-	if r.Error != "" {
-		return false
-	}
-	return true
-}
-
-func (r *Response) GetError() error {
-	if r.Error != "" {
-		return errors.New(fmt.Sprint(r.Error))
-	}
-	return nil
-}
-
-// GetData returns the Data field from the response.
-func (r *Response) GetData() interface{} {
-	return r.Data
-}
-
-func errorResp(resp *Response, err error) *Response {
-	if resp == nil {
-		resp = &Response{}
-		resp.Error = fmt.Sprintf("reponse was empty")
-		return resp
-	}
-	if err != nil {
-		resp.Error = fmt.Sprintf("error sending request: %v", err)
-		return resp
-	}
-	return resp
-}
-
 func (uc *UnixClient) SendString(path string, data string, timeoutInSeconds int) *Response {
 	resp, err := uc.Send(path, &data, timeoutInSeconds, nil, "string")
-	fmt.Println(resp, err)
 	return errorResp(resp, err)
 }
 
@@ -77,26 +36,17 @@ func (uc *UnixClient) SendBool(path string, data string, timeoutInSeconds int) *
 	return errorResp(resp, err)
 }
 
-func (uc *UnixClient) SendNumber(path string, data float64, timeoutInSeconds int) (*Response, error) {
+func (uc *UnixClient) SendNumber(path string, data float64, timeoutInSeconds int) *Response {
 	resp, err := uc.Send(path, &data, timeoutInSeconds, nil, "number")
-	if err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
-	}
-	return resp, nil
+	return errorResp(resp, err)
 }
 
-func (uc *UnixClient) SendMap(path string, data map[string]interface{}, timeoutInSeconds int) (*Response, error) {
+func (uc *UnixClient) SendMap(path string, data map[string]interface{}, timeoutInSeconds int) *Response {
 	resp, err := uc.Send(path, &data, timeoutInSeconds, nil, "map")
-	if err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
-	}
-	return resp, nil
+	return errorResp(resp, err)
 }
 
-func (uc *UnixClient) SendArray(path string, data []interface{}, timeoutInSeconds int) (*Response, error) {
+func (uc *UnixClient) SendArray(path string, data []interface{}, timeoutInSeconds int) *Response {
 	resp, err := uc.Send(path, &data, timeoutInSeconds, nil, "array")
-	if err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
-	}
-	return resp, nil
+	return errorResp(resp, err)
 }
