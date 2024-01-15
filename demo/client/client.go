@@ -13,58 +13,24 @@ type Person struct {
 	Name2 string `json:"name"`
 }
 
+type ValidationResponse struct {
+	OkMessage    string `json:"okMessage"`
+	Code         string `json:"code"`
+	Advice       string `json:"advice,omitempty"` // eg; an exiting entry already contains filed ""
+	ErrorMessage string `json:"error,omitempty"`
+	IsError      bool   `json:"isError"`
+}
+
 func main() {
 	client, err := unixclient.NewUnixClient("/tmp/unix.sock")
 	if err != nil {
 		fmt.Println("Error creating client:", err)
 		return
 	}
-
-	resp, err := client.SendString("user/send/string", "hello", 5)
-	if err != nil {
-		fmt.Println("Error sending user:", err)
-		return
-	}
+	validationResponse := &ValidationResponse{}
+	resp, err := client.Send("validation/ip", "192.168.", 5, &validationResponse, "")
 	Print(resp)
-
-	resp, err = client.SendNumber("user/send/number", 1234.66, 5)
-	if err != nil {
-		fmt.Println("Error sending user:", err)
-		return
-	}
-	Print(resp)
-
-	resultMap := make(map[string]interface{})
-	resultMap["a"] = "abc"
-	resultMap["num"] = 123.66
-
-	resp, err = client.SendMap("user/send/map", resultMap, 5)
-	if err != nil {
-		fmt.Println("Error sending user:", err)
-		return
-	}
-	Print(resp)
-
-	resp, err = client.GetString("user/get", 5)
-	if err != nil {
-		fmt.Println("Error sending user:", err)
-		return
-	}
-	Print(resp)
-
-	resp, err = client.GetMap("user/get/map", 5)
-	if err != nil {
-		fmt.Println("Error getting map:", err)
-		return
-	}
-	Print(resp)
-
-	resp, err = client.GetArray("user/get/array", 5)
-	if err != nil {
-		fmt.Println("Error getting map:", err)
-		return
-	}
-	Print(resp)
+	Print(validationResponse)
 
 	client.Close()
 }

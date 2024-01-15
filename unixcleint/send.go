@@ -3,15 +3,16 @@ package unixclient
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
 
-func (uc *UnixClient) Send(path string, model interface{}, timeoutInSeconds int, expectedResponse interface{}, expectedType string) (*Response, error) {
+func (uc *UnixClient) Send(path string, dataToSend interface{}, timeoutInSeconds int, expectedResponse interface{}, expectedType string) (*Response, error) {
 	deadline := time.Now().Add(time.Duration(timeoutInSeconds) * time.Second)
 	uc.conn.SetDeadline(deadline)
 
-	data, err := json.Marshal(model)
+	data, err := json.Marshal(dataToSend)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling data: %w", err)
 	}
@@ -26,20 +27,54 @@ func (uc *UnixClient) Send(path string, model interface{}, timeoutInSeconds int,
 	return uc.processResponse(reader, expectedResponse, expectedType)
 }
 
-func (uc *UnixClient) SendString(path string, data string, timeoutInSeconds int) (*Response, error) {
-	resp, err := uc.Send(path, &data, timeoutInSeconds, nil, "string")
-	if err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
+func (r *Response) IsError() bool {
+	if r.Error != "" {
+		return true
 	}
-	return resp, nil
+	return false
 }
 
-func (uc *UnixClient) SendBool(path string, data bool, timeoutInSeconds int) (*Response, error) {
-	resp, err := uc.Send(path, &data, timeoutInSeconds, nil, "bool")
-	if err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
+func (r *Response) IsOk() bool {
+	if r.Error != "" {
+		return false
 	}
-	return resp, nil
+	return true
+}
+
+func (r *Response) GetError() error {
+	if r.Error != "" {
+		return errors.New(fmt.Sprint(r.Error))
+	}
+	return nil
+}
+
+// GetData returns the Data field from the response.
+func (r *Response) GetData() interface{} {
+	return r.Data
+}
+
+func errorResp(resp *Response, err error) *Response {
+	if resp == nil {
+		resp = &Response{}
+		resp.Error = fmt.Sprintf("reponse was empty")
+		return resp
+	}
+	if err != nil {
+		resp.Error = fmt.Sprintf("error sending request: %v", err)
+		return resp
+	}
+	return resp
+}
+
+func (uc *UnixClient) SendString(path string, data string, timeoutInSeconds int) *Response {
+	resp, err := uc.Send(path, &data, timeoutInSeconds, nil, "string")
+	fmt.Println(resp, err)
+	return errorResp(resp, err)
+}
+
+func (uc *UnixClient) SendBool(path string, data string, timeoutInSeconds int) *Response {
+	resp, err := uc.Send(path, &data, timeoutInSeconds, nil, "bool")
+	return errorResp(resp, err)
 }
 
 func (uc *UnixClient) SendNumber(path string, data float64, timeoutInSeconds int) (*Response, error) {

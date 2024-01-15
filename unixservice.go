@@ -208,6 +208,7 @@ func (us *UnixService) prepareResponse(data interface{}, err error) Response {
 	if err != nil {
 		return Response{Status: "Error", Error: err.Error()}
 	}
+
 	return Response{Status: "Success", Data: data}
 }
 
